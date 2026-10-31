@@ -15,18 +15,7 @@ exports.registerValidator = [
 
   body('password')
     .notEmpty().withMessage('Password is required')
-    .isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('Password must contain at least one uppercase, one lowercase, and one number'),
-
-  body('confirmPassword')
-    .notEmpty().withMessage('Confirm password is required')
-    .custom((value, { req }) => {
-      if (value !== req.body.password) {
-        throw new Error('Passwords do not match');
-      }
-      return true;
-    }),
+    .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
 ];
 
 // Login validation
