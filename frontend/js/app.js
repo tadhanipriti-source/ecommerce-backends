@@ -1,7 +1,31 @@
 
 /* ============================================
    MAIN APP — Router, Product Detail, Search
+   Login / Register Removed
    ============================================ */
+
+// ============================================
+// WISHLIST — LOCAL STORAGE
+// ============================================
+
+const getWishlist = () => {
+    return JSON.parse(localStorage.getItem('nexus-wishlist') || '[]');
+};
+
+const toggleWishlist = (productId) => {
+    let wishlist = getWishlist();
+
+    const isWished = !wishlist.includes(productId);
+
+    wishlist = isWished
+        ? [...wishlist, productId]
+        : wishlist.filter(id => id !== productId);
+
+    localStorage.setItem('nexus-wishlist', JSON.stringify(wishlist));
+
+    return isWished;
+};
+
 
 // ============================================
 // PRODUCT DETAIL MODAL
@@ -23,7 +47,7 @@ const openProductDetail = async (productId) => {
         const data = await API.products.getById(productId);
         const p = data.data || data.product;
 
-        const wishlist = Auth.getWishlist();
+        const wishlist = getWishlist();
         const isWished = wishlist.includes(p._id);
 
         const discountPct = p.discountPrice
@@ -192,7 +216,12 @@ const openProductDetail = async (productId) => {
 
                 thumb.classList.add('active');
 
-                document.getElementById('gallery-main-img').src = thumb.dataset.url;
+                const mainImg = document.getElementById('gallery-main-img');
+
+                if (mainImg) {
+                    mainImg.src = thumb.dataset.url;
+                }
+
             });
 
         });
@@ -219,22 +248,31 @@ const openProductDetail = async (productId) => {
         });
 
         // Add to cart
-        document.getElementById('detail-add-cart')?.addEventListener('click', () => {
+        document.getElementById('detail-add-cart')?.addEventListener('click', async () => {
 
-            Cart.add(p, qty);
-            UI.hideAllModals();
+            try {
+                await Cart.add(p, qty);
+                UI.hideAllModals();
+            } catch (err) {
+                UI.toast(err.message, 'error');
+            }
 
         });
 
         // Wishlist
-        document.getElementById('detail-wishlist')?.addEventListener('click', async () => {
+        document.getElementById('detail-wishlist')?.addEventListener('click', () => {
 
-            const isNowWished = await Auth.toggleWishlist(p._id);
+            const isNowWished = toggleWishlist(p._id);
 
             const btn = document.getElementById('detail-wishlist');
 
             if (btn) {
                 btn.classList.toggle('active', isNowWished);
+
+                btn.querySelector('svg')?.setAttribute(
+                    'fill',
+                    isNowWished ? 'currentColor' : 'none'
+                );
 
                 UI.toast(
                     isNowWished ? 'Added to wishlist ❤️' : 'Removed from wishlist',
@@ -312,27 +350,23 @@ const bindProductCardEvents = (container) => {
     // Wishlist
     container.querySelectorAll('.wishlist-toggle').forEach((btn) => {
 
-        btn.addEventListener('click', async (e) => {
+        btn.addEventListener('click', (e) => {
 
             e.stopPropagation();
 
-            const isNowWished = await Auth.toggleWishlist(btn.dataset.id);
+            const isNowWished = toggleWishlist(btn.dataset.id);
 
-            if (isNowWished !== false) {
+            btn.classList.toggle('active', isNowWished);
 
-                btn.classList.toggle('active', isNowWished);
+            btn.querySelector('svg')?.setAttribute(
+                'fill',
+                isNowWished ? 'currentColor' : 'none'
+            );
 
-                btn.querySelector('svg')?.setAttribute(
-                    'fill',
-                    isNowWished ? 'currentColor' : 'none'
-                );
-
-                UI.toast(
-                    isNowWished ? 'Added to wishlist ❤️' : 'Removed from wishlist',
-                    'info'
-                );
-
-            }
+            UI.toast(
+                isNowWished ? 'Added to wishlist ❤️' : 'Removed from wishlist',
+                'info'
+            );
 
         });
 
@@ -403,10 +437,10 @@ const initSearch = () => {
             try {
 
                 const data = await API.products.getAll(
-                    `search=${encodeURIComponent(q)}&limit=6`
+                    `keyword=${encodeURIComponent(q)}&limit=6`
                 );
 
-                const products = data.data || [];
+                const products = data.products || data.data || [];
 
                 if (!products.length) {
 
@@ -558,30 +592,6 @@ const initNavLinks = () => {
 
     });
 
-    document.getElementById('orders-link')?.addEventListener('click', (e) => {
-
-        e.preventDefault();
-        document.getElementById('user-dropdown')?.classList.remove('show');
-        App.navigate('orders');
-
-    });
-
-    document.getElementById('wishlist-link')?.addEventListener('click', (e) => {
-
-        e.preventDefault();
-        document.getElementById('user-dropdown')?.classList.remove('show');
-        UI.toast('Wishlist page — coming soon!', 'info');
-
-    });
-
-    document.getElementById('profile-link')?.addEventListener('click', (e) => {
-
-        e.preventDefault();
-        document.getElementById('user-dropdown')?.classList.remove('show');
-        UI.toast('Profile page — coming soon!', 'info');
-
-    });
-
 };
 
 
@@ -641,7 +651,8 @@ const App = {
                 break;
 
             case 'orders':
-                OrdersPage.render();
+                UI.toast('Orders feature is not available yet.', 'info');
+                HomePage.render();
                 break;
 
             default:
@@ -668,11 +679,11 @@ const App = {
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-    // Initialize UI events
-    Auth.initAuthForms();
+    // Initialize Cart
     Cart.initCartEvents();
     Cart.initCheckoutForm();
 
+    // Initialize other events
     initSearch();
     initNavbarScroll();
     initMobileMenu();
@@ -681,23 +692,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Wishlist button
     document.getElementById('wishlist-btn')?.addEventListener('click', () => {
-
-        if (!Auth.isLoggedIn()) {
-            UI.showModal('auth-modal');
-            return;
-        }
-
-        UI.toast('Wishlist page — coming soon!', 'info');
-
+        UI.toast('Wishlist saved on this device ❤️', 'info');
     });
-
-    // Fetch current user
-    await Auth.fetchMe();
-
-    // Sync cart if logged in
-    if (Auth.isLoggedIn()) {
-        Cart.syncFromBackend();
-    }
 
     // Render home page
     await HomePage.render();

@@ -1,6 +1,7 @@
 
 /* ============================================
-   SHOP PAGE — Product listing, filters, search
+   NEXUS STORE — SHOP PAGE
+   Product listing, filters, search
    ============================================ */
 
 const ShopPage = (() => {
@@ -11,10 +12,15 @@ const ShopPage = (() => {
     let filters = {};
     let searchTimer = null;
 
+    /* ============================================
+       GET ARRAY FROM API RESPONSE
+       ============================================ */
 
     const getArray = (response, keys = []) => {
 
-        if (Array.isArray(response)) return response;
+        if (Array.isArray(response)) {
+            return response;
+        }
 
         for (const key of keys) {
 
@@ -67,6 +73,29 @@ const ShopPage = (() => {
 
 
     /* ============================================
+       GET WISHLIST FROM LOCAL STORAGE
+       ============================================ */
+
+    const getWishlist = () => {
+
+        try {
+
+            const wishlist = JSON.parse(
+                localStorage.getItem('nexus-wishlist') || '[]'
+            );
+
+            return Array.isArray(wishlist) ? wishlist : [];
+
+        } catch (error) {
+
+            console.error('Wishlist Error:', error);
+
+            return [];
+        }
+    };
+
+
+    /* ============================================
        RENDER SHOP PAGE
        ============================================ */
 
@@ -80,6 +109,8 @@ const ShopPage = (() => {
 
         const app = document.getElementById('app');
 
+        if (!app) return;
+
         app.innerHTML = `
 
             <div class="shop-layout">
@@ -92,12 +123,14 @@ const ShopPage = (() => {
                         🎛 Filters
                     </h3>
 
-
                     <div class="filter-group">
 
                         <label>Category</label>
 
-                        <select class="filter-select" id="filter-category">
+                        <select
+                            class="filter-select"
+                            id="filter-category"
+                        >
 
                             <option value="">
                                 All Categories
@@ -107,27 +140,38 @@ const ShopPage = (() => {
 
                     </div>
 
-
                     <div class="filter-group">
 
                         <label>Sort By</label>
 
-                        <select class="filter-select" id="filter-sort">
+                        <select
+                            class="filter-select"
+                            id="filter-sort"
+                        >
 
-                            <option value="-createdAt">Newest First</option>
+                            <option value="-createdAt">
+                                Newest First
+                            </option>
 
-                            <option value="price">Price: Low to High</option>
+                            <option value="price">
+                                Price: Low to High
+                            </option>
 
-                            <option value="-price">Price: High to Low</option>
+                            <option value="-price">
+                                Price: High to Low
+                            </option>
 
-                            <option value="-ratings">Top Rated</option>
+                            <option value="-ratings">
+                                Top Rated
+                            </option>
 
-                            <option value="-sold">Best Selling</option>
+                            <option value="-sold">
+                                Best Selling
+                            </option>
 
                         </select>
 
                     </div>
-
 
                     <div class="filter-group">
 
@@ -153,7 +197,6 @@ const ShopPage = (() => {
 
                     </div>
 
-
                     <div class="filter-group">
 
                         <label class="filter-check">
@@ -170,7 +213,6 @@ const ShopPage = (() => {
 
                     </div>
 
-
                     <button
                         class="btn-primary full"
                         id="apply-filters-btn"
@@ -178,7 +220,6 @@ const ShopPage = (() => {
                     >
                         Apply Filters
                     </button>
-
 
                     <button
                         class="btn-ghost full"
@@ -198,9 +239,14 @@ const ShopPage = (() => {
                     <div class="shop-toolbar">
 
                         <div class="toolbar-left">
-                            <span class="result-count" id="result-count">
+
+                            <span
+                                class="result-count"
+                                id="result-count"
+                            >
                                 Loading…
                             </span>
+
                         </div>
 
                         <div style="display:flex;gap:0.5rem;align-items:center;">
@@ -219,11 +265,16 @@ const ShopPage = (() => {
 
 
                     <div id="products-grid">
+
                         ${UI.skeletonGrid(12)}
+
                     </div>
 
 
-                    <div class="pagination" id="pagination"></div>
+                    <div
+                        class="pagination"
+                        id="pagination"
+                    ></div>
 
                 </div>
 
@@ -251,20 +302,23 @@ const ShopPage = (() => {
 
         if (filters.category) {
 
-            document.getElementById('filter-category').value =
-                filters.category;
+            document.getElementById(
+                'filter-category'
+            ).value = filters.category;
         }
 
         if (filters.sort) {
 
-            document.getElementById('filter-sort').value =
-                filters.sort;
+            document.getElementById(
+                'filter-sort'
+            ).value = filters.sort;
         }
 
 
         bindFilterEvents();
 
         await loadProducts();
+
     };
 
 
@@ -284,23 +338,31 @@ const ShopPage = (() => {
                     response,
                     ['categories']
                 );
+
             }
 
 
-            const select =
-                document.getElementById('filter-category');
+            const select = document.getElementById(
+                'filter-category'
+            );
 
             if (!select) return;
 
 
             select.innerHTML = `
-                <option value="">All Categories</option>
+
+                <option value="">
+                    All Categories
+                </option>
 
                 ${categories.map(category => `
+
                     <option value="${category._id}">
                         ${category.name}
                     </option>
+
                 `).join('')}
+
             `;
 
         } catch (error) {
@@ -309,7 +371,9 @@ const ShopPage = (() => {
                 'Category loading error:',
                 error.message
             );
+
         }
+
     };
 
 
@@ -319,11 +383,13 @@ const ShopPage = (() => {
 
     const loadProducts = async () => {
 
-        const grid =
-            document.getElementById('products-grid');
+        const grid = document.getElementById(
+            'products-grid'
+        );
 
-        const count =
-            document.getElementById('result-count');
+        const count = document.getElementById(
+            'result-count'
+        );
 
         if (!grid) return;
 
@@ -333,8 +399,18 @@ const ShopPage = (() => {
 
         try {
 
+            console.log(
+                'Loading products from:',
+                API.BASE_URL
+            );
+
             const response = await API.products.getAll(
                 buildQuery()
+            );
+
+            console.log(
+                'Products API Response:',
+                response
             );
 
 
@@ -345,41 +421,59 @@ const ShopPage = (() => {
 
 
             // Backend pagination
+
             totalPages =
-                response.pagination?.pages ||
+                response.pagination?.totalPages ||
                 response.totalPages ||
                 1;
 
 
             const total =
-                response.pagination?.total ||
+                response.pagination?.totalProducts ||
                 response.total ||
                 response.count ||
                 products.length;
 
 
             if (count) {
-                count.textContent = `${total} products found`;
+
+                count.textContent =
+                    `${total} products found`;
+
             }
 
 
-            const wishlist = Auth.getWishlist();
+            // Wishlist from localStorage
+
+            const wishlist = getWishlist();
 
 
             if (!products.length) {
 
                 grid.innerHTML = `
-                    <div class="empty-state" style="grid-column:1/-1;padding:4rem;">
 
-                        <div class="empty-icon">🔍</div>
+                    <div
+                        class="empty-state"
+                        style="grid-column:1/-1;padding:4rem;"
+                    >
 
-                        <p>No products match your filters</p>
+                        <div class="empty-icon">
+                            🔍
+                        </div>
 
-                        <button class="btn-outline" id="reset-search-btn">
+                        <p>
+                            No products match your filters
+                        </p>
+
+                        <button
+                            class="btn-outline"
+                            id="reset-search-btn"
+                        >
                             Clear Filters
                         </button>
 
                     </div>
+
                 `;
 
 
@@ -392,11 +486,13 @@ const ShopPage = (() => {
                         currentPage = 1;
 
                         render();
+
                     });
 
             } else {
 
                 grid.innerHTML = `
+
                     <div class="product-grid">
 
                         ${products.map((product, index) => {
@@ -412,38 +508,64 @@ const ShopPage = (() => {
                         }).join('')}
 
                     </div>
+
                 `;
 
 
                 bindProductCardEvents(grid);
+
             }
 
 
             renderPagination();
 
+
         } catch (error) {
 
-            grid.innerHTML = `
-                <div class="empty-state" style="grid-column:1/-1;">
+            console.error(
+                'Product loading error:',
+                error
+            );
 
-                    <div class="empty-icon">⚠️</div>
+
+            if (count) {
+                count.textContent = 'Products could not be loaded';
+            }
+
+
+            grid.innerHTML = `
+
+                <div
+                    class="empty-state"
+                    style="grid-column:1/-1;"
+                >
+
+                    <div class="empty-icon">
+                        ⚠️
+                    </div>
 
                     <p>
-                        ${String(error.message || 'Could not load products')}
+                        ${error.message || 'Could not load products'}
                     </p>
 
-                    <button class="btn-outline" id="retry-products-btn">
+                    <button
+                        class="btn-outline"
+                        id="retry-products-btn"
+                    >
                         Try Again
                     </button>
 
                 </div>
+
             `;
 
 
             document
                 .getElementById('retry-products-btn')
                 ?.addEventListener('click', loadProducts);
+
         }
+
     };
 
 
@@ -453,8 +575,9 @@ const ShopPage = (() => {
 
     const renderPagination = () => {
 
-        const pagination =
-            document.getElementById('pagination');
+        const pagination = document.getElementById(
+            'pagination'
+        );
 
         if (!pagination) return;
 
@@ -499,14 +622,20 @@ const ShopPage = (() => {
 
                 `;
 
-            } else if (Math.abs(i - currentPage) === 2) {
+            } else if (
+                Math.abs(i - currentPage) === 2
+            ) {
 
                 html += `
+
                     <span style="color:var(--text-muted);padding:0 0.25rem;">
                         …
                     </span>
+
                 `;
+
             }
+
         }
 
 
@@ -540,7 +669,9 @@ const ShopPage = (() => {
                         top: 0,
                         behavior: 'smooth'
                     });
+
                 }
+
             });
 
 
@@ -558,7 +689,9 @@ const ShopPage = (() => {
                         top: 0,
                         behavior: 'smooth'
                     });
+
                 }
+
             });
 
 
@@ -568,8 +701,10 @@ const ShopPage = (() => {
 
                 button.addEventListener('click', () => {
 
-                    currentPage =
-                        parseInt(button.dataset.page, 10);
+                    currentPage = parseInt(
+                        button.dataset.page,
+                        10
+                    );
 
                     loadProducts();
 
@@ -577,8 +712,11 @@ const ShopPage = (() => {
                         top: 0,
                         behavior: 'smooth'
                     });
+
                 });
+
             });
+
     };
 
 
@@ -588,34 +726,43 @@ const ShopPage = (() => {
 
     const bindFilterEvents = () => {
 
-        const applyBtn =
-            document.getElementById('apply-filters-btn');
+        const applyBtn = document.getElementById(
+            'apply-filters-btn'
+        );
 
-        const clearBtn =
-            document.getElementById('clear-filters-btn');
+        const clearBtn = document.getElementById(
+            'clear-filters-btn'
+        );
 
-        const priceRange =
-            document.getElementById('filter-price');
+        const priceRange = document.getElementById(
+            'filter-price'
+        );
 
-        const priceValue =
-            document.getElementById('price-val');
+        const priceValue = document.getElementById(
+            'price-val'
+        );
 
-        const inlineSearch =
-            document.getElementById('inline-search');
+        const inlineSearch = document.getElementById(
+            'inline-search'
+        );
 
 
         // Price display
+
         priceRange?.addEventListener('input', () => {
 
             if (priceValue) {
 
                 priceValue.textContent =
                     `₹${Number(priceRange.value).toLocaleString('en-IN')}`;
+
             }
+
         });
 
 
         // Search
+
         inlineSearch?.addEventListener('input', () => {
 
             clearTimeout(searchTimer);
@@ -629,31 +776,39 @@ const ShopPage = (() => {
                 loadProducts();
 
             }, 400);
+
         });
 
 
         // Apply filters
+
         applyBtn?.addEventListener('click', () => {
 
-            filters.category =
-                document.getElementById('filter-category').value;
+            filters.category = document.getElementById(
+                'filter-category'
+            ).value;
 
-            filters.sort =
-                document.getElementById('filter-sort').value;
+            filters.sort = document.getElementById(
+                'filter-sort'
+            ).value;
 
-            filters.maxPrice =
-                document.getElementById('filter-price').value;
+            filters.maxPrice = document.getElementById(
+                'filter-price'
+            ).value;
 
-            filters.inStock =
-                document.getElementById('filter-instock').checked;
+            filters.inStock = document.getElementById(
+                'filter-instock'
+            ).checked;
 
             currentPage = 1;
 
             loadProducts();
+
         });
 
 
         // Clear filters
+
         clearBtn?.addEventListener('click', () => {
 
             filters = {};
@@ -661,25 +816,45 @@ const ShopPage = (() => {
             currentPage = 1;
 
 
-            document.getElementById('filter-category').value = '';
+            document.getElementById(
+                'filter-category'
+            ).value = '';
 
-            document.getElementById('filter-sort').value = '-createdAt';
+            document.getElementById(
+                'filter-sort'
+            ).value = '-createdAt';
 
-            document.getElementById('filter-price').value = '50000';
+            document.getElementById(
+                'filter-price'
+            ).value = '50000';
 
-            document.getElementById('price-val').textContent = '₹50,000';
+            document.getElementById(
+                'price-val'
+            ).textContent = '₹50,000';
 
-            document.getElementById('filter-instock').checked = false;
+            document.getElementById(
+                'filter-instock'
+            ).checked = false;
+
 
             if (inlineSearch) {
                 inlineSearch.value = '';
             }
 
+
             loadProducts();
+
         });
+
     };
 
 
-    return { render };
+    /* ============================================
+       RETURN PUBLIC METHODS
+       ============================================ */
+
+    return {
+        render
+    };
 
 })();
