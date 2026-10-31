@@ -25,7 +25,6 @@ const app = express();
 // SECURITY MIDDLEWARE
 // ============================================
 
-// Set security HTTP headers
 app.use(helmet());
 
 // ============================================
@@ -38,7 +37,7 @@ const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:5500',
     'http://127.0.0.1:5500',
-    'https://ecommerce-frontend.vercel.app',
+    'https://ecommerce-backends-frontend.vercel.app',
 ].filter(Boolean);
 
 app.use(
@@ -60,7 +59,6 @@ app.use(
 // RATE LIMITING
 // ============================================
 
-// General API rate limit
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
@@ -72,7 +70,6 @@ const limiter = rateLimit({
     legacyHeaders: false,
 });
 
-// Authentication rate limit
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
@@ -98,7 +95,6 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// Data sanitization against NoSQL query injection
 app.use(mongoSanitize());
 
 // ============================================
@@ -160,7 +156,6 @@ app.use(`${API_VERSION}/admin`, adminRoutes);
 // ERROR HANDLING
 // ============================================
 
-// Handle undefined routes
 app.all('*', (req, res, next) => {
     next(
         new AppError(
@@ -170,7 +165,6 @@ app.all('*', (req, res, next) => {
     );
 });
 
-// Global error handler
 app.use(errorHandler);
 
 module.exports = app;
