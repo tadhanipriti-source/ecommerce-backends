@@ -24,6 +24,24 @@ const HomePage = (() => {
     };
 
 
+    // Get wishlist from localStorage
+    const getWishlist = () => {
+
+        try {
+            const wishlist = JSON.parse(
+                localStorage.getItem('nexus-wishlist') || '[]'
+            );
+
+            return Array.isArray(wishlist) ? wishlist : [];
+
+        } catch (error) {
+
+            console.error('Wishlist error:', error);
+            return [];
+        }
+    };
+
+
     const render = async () => {
 
         UI.setNavActive(null);
@@ -72,7 +90,6 @@ const HomePage = (() => {
                         </button>
 
                     </div>
-
 
                     <div class="hero-stats">
 
@@ -296,7 +313,7 @@ const HomePage = (() => {
 
             console.error(
                 'Category loading error:',
-                error.message
+                error
             );
         }
     };
@@ -317,12 +334,14 @@ const HomePage = (() => {
 
             const response = await API.products.getFeatured();
 
+            console.log('Featured API Response:', response);
+
             const products = getArray(
                 response,
                 ['products']
             ).slice(0, 4);
 
-            const wishlist = Auth.getWishlist();
+            const wishlist = getWishlist();
 
             if (!products.length) {
 
@@ -351,7 +370,7 @@ const HomePage = (() => {
 
             console.error(
                 'Featured products error:',
-                error.message
+                error
             );
 
             container.innerHTML = `
@@ -377,19 +396,18 @@ const HomePage = (() => {
 
         try {
 
-            // Backend does not have a separate new-arrivals route.
-            // Use products listing with newest sorting.
-
             const response = await API.products.getAll(
                 'sort=-createdAt&limit=8'
             );
+
+            console.log('New Arrivals API Response:', response);
 
             const products = getArray(
                 response,
                 ['products']
             );
 
-            const wishlist = Auth.getWishlist();
+            const wishlist = getWishlist();
 
             if (!products.length) {
 
@@ -418,7 +436,7 @@ const HomePage = (() => {
 
             console.error(
                 'New arrivals error:',
-                error.message
+                error
             );
 
             container.innerHTML = `
